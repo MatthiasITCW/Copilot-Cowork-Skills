@@ -1,0 +1,58 @@
+Create a custom Cowork skill called skill-factory in my personal skill library. This will be a meta-skill that knows how to create other skills for me on demand.
+
+Before writing anything, study the house style:
+
+Read 3–4 built-in skills at 
+/opt/workspace-config/.claude/skills/
+ (e.g. calendar-management, daily-briefing, meeting-intel, stakeholder-comms) to absorb the YAML frontmatter, section ordering, trigger-phrase density, and table patterns
+Read legal-redliner at 
+/mnt/user-config/.claude/skills/legal-redliner/
+ as the gold-standard Full Package example (SKILL.md + references/ + scripts/ + assets/)
+Read the templates at 
+
+templates.md
+Write the skill package to 
+/mnt/user-config/.claude/skills/skill-factory/
+ with these files:
+
+
+SKILL.md
+ (200–400 lines) with: YAML frontmatter (name + multi-line description with ≥8 trigger phrases like "create skills", "build a skill package", "batch create skills", "skill factory", plus "Do NOT use for…" exclusions that delegate single-skill lifecycle ops to the built-in skills skill); H1 title; When to Use / When NOT to Use; Quick Start with a concrete end-to-end example; a Tier Selection table (Standard = SKILL.md only, Enhanced = + references/, Full Package = + references/ + scripts/ + assets/); a 7-phase Authoring Workflow (Study → Plan → Draft SKILL.md → Author supporting files → Write → Verify with Glob → Report); a Quality Bar table (≥200 lines SKILL.md, ≥8 trigger phrases, ≥5 tables, ≥6 troubleshooting rows, all calculations via code tools, every reference/script/asset cross-linked); Built-In Skills Used table; Output Format table; Guardrails (never modify built-ins, never fabricate frameworks, kebab-case names, 50-skill cap, verify before reporting success); Common Issues troubleshooting table with ≥6 rows
+
+
+component-spec.md
+ (80–200 lines) — exact sizing rules per component: SKILL.md 200–400 lines with all 10 mandatory sections, references 80–200 lines, scripts 150–400 lines (Python 3 stdlib only, JSON output), assets 10–150 lines (verbatim content with [PLACEHOLDER] syntax), filename conventions (kebab-case .md, snake_case .py), and the frontmatter schema
+
+
+quality-rubric.md
+ (80–200 lines) — 100-point scoring rubric across 4 dimensions (Discoverability, Completeness, Rigor, Maintainability — 25 points each), score bands (90+ excellent, 75+ good, <75 needs work), a manual self-check procedure, and an anti-patterns table
+
+
+cover-note-template.md
+ (10–150 lines) — verbatim completion-report template for reporting batch results back to the user, with [PLACEHOLDER] syntax and a filled example
+
+
+checklist-template.md
+ (10–150 lines) — pre-write QA checklist covering frontmatter validity, mandatory section presence, content rigor (real frameworks only, no fabricated citations), cross-link integrity, sizing, tier consistency, and post-write verification
+
+Rules:
+
+All calculations the skill instructs must route through code tools, never mental arithmetic
+Every 
+
+*.md
+, 
+
+*.py
+, 
+
+*.md
+ must be cross-linked from SKILL.md via relative paths
+Use real established frameworks only (ADKAR, Kotter, 5 Whys, RACI, RAID, OKR, MoSCoW, SWOT, PESTLE, Pyramid Principle, etc.)
+Kebab-case name, must not shadow built-ins (pdf, docx, xlsx, pptx, skills, calendar-management, etc.)
+Respect the 50-skill cap
+After writing, run 
+*
+ to verify all 5 files exist. Do not report success until verification passes. Tell me the files will appear in OneDrive under 
+Cowork/Skills/skill-factory/
+ within ~35 seconds.
