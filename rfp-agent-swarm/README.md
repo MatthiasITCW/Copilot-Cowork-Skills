@@ -47,6 +47,13 @@ This is not about replacing the bid team. It is about **amplifying** them: autom
 
 The swarm is a deliberately linear pipeline with one shared substrate (the answer bank) that every stage reads from and some stages write to.
 
+![RFP Agent Swarm — six workflow steps over the rfp-answer-bank shared substrate](screenshots/diagram-pipeline-overview.png)
+
+*Six workflow skills sit on top of one shared substrate: `rfp-answer-bank` provides the Loopio-backed knowledge base, the canonical audit log, and the shared `append_audit` helper that every other skill uses.*
+
+<details>
+<summary>ASCII alternative (for low-bandwidth contexts)</summary>
+
 ```
               ┌──────────────────────┐
               │   rfp-answer-bank    │   ← shared substrate
@@ -68,6 +75,8 @@ The swarm is a deliberately linear pipeline with one shared substrate (the answe
                                                        │  rfp-assemble    │
                                                        └──────────────────┘
 ```
+
+</details>
 
 
 ### The Seven Skills
@@ -112,6 +121,10 @@ A detailed audit of the swarm (see [RESEARCH-PAPER.md §11](RESEARCH-PAPER.md#11
 | 5 | **Non-Overridable Human Gates** | Critical decisions (Go/No-Go, Security, Legal, Pricing) are encoded as Python script preconditions. No force flag, no bypass token. The next script will not start without the corresponding audit event. |
 | 6 | **Append-Only Audit + Embedded Provenance** | All skills write to one shared audit log via one shared script. Provenance is embedded in every deliverable (Word appendix, Excel columns, PDF footer, CSV sidecar). Assembly refuses to run if the appendix row count ≠ question count. |
 
+![Four enterprise-class enhancements applied across all seven skills: shared audit log, record-set framing, adaptive-card milestones, and sibling-awareness](screenshots/diagram-enterprise-enhancements.png)
+
+*The four enterprise-class enhancements applied uniformly across all seven skills — a single typed audit log, named record sets between skills, an Adaptive Card milestone after every step, and explicit upstream/downstream sibling declarations in every `SKILL.md`.*
+
 ---
 
 ## The AI / Deterministic Split
@@ -129,6 +142,10 @@ A defining characteristic of the swarm is the discipline with which it segregate
 | Append-only audit logging | (none — auditing is 100 % deterministic) |
 
 The payoff: a reviewer challenging an answer can trace every score, every routing decision, and every formatting choice to a specific line in a specific script.
+
+![Coverage matrix showing which Cowork built-in skills (Word, Excel, PowerPoint, PDF, Adaptive Cards, Enterprise Search, Deep Research, Email, Calendar, Teams) are leveraged by each of the seven RFP skills](screenshots/diagram-cowork-builtins-matrix.png)
+
+*Cowork built-ins leveraged by each skill. Adaptive Cards and Excel are the two constants — every skill renders a milestone card and writes an audit row.*
 
 ---
 
@@ -160,6 +177,56 @@ The skill packages in this repo make no assumption about any specific vendor for
 2. **Install** the skills into your Cowork personal skills library (via OneDrive). Start with `rfp-answer-bank` because every other skill depends on it.
 3. **Try it on a throwaway RFP.** Give Cowork a sample tender PDF and say *"parse this RFP"*. That triggers `rfp-intake`. Then walk the pipeline step by step.
 4. **Inspect the audit log.** The most informative artefact is `output/rfp-<id>/audit-log.xlsx` — every decision, every gate, every correction is there.
+
+---
+
+## Walkthrough — An Illustrative End-to-End Run
+
+The screenshots below are taken from an internal research demo using a **fictional buyer** ("Meridian Health Systems") and a **deliberately empty answer bank**, so the reader can see how the swarm behaves at the toughest end of the spectrum: a 172-question RFP with zero KB matches, where every safeguard fires.
+
+> All names, IDs, scores, and pricing references in these screenshots are illustrative. No real customer, contract, or commercial data is represented.
+
+### How a deal lead drives the swarm
+
+![Walkthrough table showing six natural-language deal-lead prompts, the skill each one invokes, and the named record set produced](screenshots/diagram-walkthrough-prompts-to-skills.png)
+
+*Each row is a single natural-language prompt from the deal lead, the skill it invokes, and the named record set it produces. `rfp-answer-bank` writes one audit row for every event — a single chain of custody.*
+
+### Step 1 — `rfp-intake`: parse and classify
+
+![Cowork intake card for MHS-IWMS-2026-001 showing 172 total questions, 153 mandatory, 29 days to deadline, and a donut chart of questions by owner team](screenshots/demo-01-intake-dashboard.png)
+
+*The intake Adaptive Card after `rfp-intake` finishes. 172 questions classified across 11 sections, 89 % mandatory, donut showing the team split (Solution Architecture, Security Engineering, Commercial Desk, Corporate Marketing). Buyer metadata (issue date, clarification window, response deadline) is extracted deterministically from the source documents.*
+
+### Step 2 — `rfp-fit-assessment`: Go/No-Go scorecard
+
+![Go/No-Go scorecard card showing weighted score 64.0/100, recommendation CONDITIONAL, KB match estimate 69 % at LOW confidence, dimension bars across the seven dimensions, and a weight-contribution donut](screenshots/demo-02-fit-scorecard.png)
+
+*The seven-dimension fit scorecard with a CONDITIONAL recommendation. The system surfaces top strengths (Technical Fit 4/5 — IWMS suite covers Space, Asset, Move, WO, ESG natively; Strategic 4/5 — board-sponsored healthcare logo) and top risks (Deadline 2/5 — 29 days; KB Confidence LOW — no historical match samples). The decision owner is named explicitly ("VP Sales") and the card is clear that the AI is advisory only.*
+
+![Narrative confirmation from rfp-fit-assessment listing the GoNoGo memo and TaskList deliverables, plus three AE clarifications to close before sign-off](screenshots/demo-03-fit-narrative.png)
+
+*The accompanying narrative summary. Deliverables are linked, AE clarifications are listed, and the next step (`rfp-respond`) is explicitly gated behind the human Go decision.*
+
+### Step 3 — `rfp-respond`: retrieval-first drafting
+
+![rfp-respond card showing 172 drafted, 0 % HIGH, 0 % MEDIUM, 100 % LOW/flagged, per-team queues for Security/Technical/Commercial all flagged, and a sample list of held questions with reasons (Cert claim, Legal, Pricing)](screenshots/demo-04-respond-flagged.png)
+
+*The retrieval-first contract on display. With an empty answer bank, every question routes to LOW tier and is flagged for SME drafting. Confidence is **capped at 75** until a reviewer promotes the tier — the structural cap that prevents generated content from masquerading as KB-sourced. The card also shows held items by reason (Cert claim, Legal, Pricing) so the deal lead can see exactly why each question is blocking.*
+
+### Step 4 — `rfp-gates`: non-overridable approval gates
+
+![Quality gates card showing pipeline state PAUSED, verdict BLOCKED at precheck, all three gates (Security, Legal, Pricing) BLOCKED, with auto-fail codes by gate and a table of what each owning team must supply before the gates can re-run](screenshots/demo-05-gates-blocked-card.png)
+
+*The hard-gate enforcement in action. All three gates ran their automated prechecks and **blocked** — by design, because the originating teams had not yet supplied approved cert lists, human-reviewed legal flags, or authorised pricing inputs. Each gate names its approver (Security Lead, Legal Counsel, Account Exec), shows top auto-fail codes (`SEC_MISSING`, `PRICING_GENERATED`, `LEGAL_UNREVIEWED`), and routes back to the originating skill with a structured reason.*
+
+![Narrative explanation noting there is no --force flag, deadline pressure does not unlock the gates, and detailing what SecOps, Legal Counsel, and Pricing Ops each need to supply to unblock](screenshots/demo-06-gates-blocked-narrative.png)
+
+*The accompanying narrative makes the contract explicit: **there is no `--force` flag** and deadline pressure does not unlock the gates. Each blocking team is told precisely what artefact they need to supply (`approved_certs.json`, `human_reviewed=true` on flagged legal items, `authorised_pricing_inputs.json`) and the loop closes by re-running `rfp-respond` for the affected questions.*
+
+### Why this matters
+
+This demo deliberately picked the worst case — an empty answer bank — to show that the swarm fails *safely*. Nothing reaches the buyer. Every blocker is named, owned, and routed. The audit log captures every step. With a populated answer bank, the same flow shifts the work distribution: HIGH-tier auto-answers cover the bulk of questions, MEDIUM-tier matches need light SME adaptation, and only the genuinely novel LOW-tier items demand fresh drafting.
 
 ---
 
