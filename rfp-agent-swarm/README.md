@@ -4,6 +4,22 @@
 
 > **This is a research document.** It describes one possible architecture, not a shipped Microsoft product. The skills linked here are working artefacts built to explore the pattern — not a production-ready system. See the [Disclaimers](#disclaimers) before adopting any of it.
 
+> 📄 **Full architectural study:** see [RESEARCH-PAPER.md](RESEARCH-PAPER.md) for the long-form analysis (script audit, blackboard model, confidence-tier propagation, the six recurring patterns, and the AI-vs-deterministic decomposition).
+
+---
+
+## At a Glance
+
+| | |
+|---|---|
+| **Skill packages** | 7 `SKILL.md` manifests |
+| **Python scripts** | 22 (100 % stdlib, 100 % `argparse` CLIs, 100 % syntax-clean) |
+| **Reference docs** | 26 on-demand Markdown lookup tables |
+| **Static assets** | 10 verbatim templates |
+| **External dependencies** | **Zero** — runs in any Python 3.8+ sandbox |
+| **Hard human gates** | 4 (Go/No-Go, Security, Legal, Pricing) — non-overridable |
+| **Generation confidence cap** | 75 (only humans can promote tier) |
+
 ---
 
 ## The Problem
@@ -53,6 +69,7 @@ The swarm is a deliberately linear pipeline with one shared substrate (the answe
                                                        └──────────────────┘
 ```
 
+
 ### The Seven Skills
 
 | # | Skill | Role in the pipeline |
@@ -79,6 +96,39 @@ These are the ideas the swarm is built around. They are deliberately stated up f
 6. **One audit trail to rule them all.** All seven skills write to a single `audit-log.xlsx` via one shared script owned by `rfp-answer-bank`. There is exactly one canonical Event Type Catalogue.
 7. **Narrow skills, explicit contracts.** Each skill has a single job and a documented upstream/downstream contract. No skill re-drafts answers once `rfp-respond` has written them; no skill touches the KB without going through `rfp-answer-bank`.
 8. **The human signs the bid.** This stack produces an excellent *draft*. It never submits. A named deal lead always does the final click.
+
+---
+
+## Six Recurring Patterns
+
+A detailed audit of the swarm (see [RESEARCH-PAPER.md §11](RESEARCH-PAPER.md#11-architectural-patterns)) surfaces six patterns we believe generalise to *any* agentic workflow that combines LLM reasoning with deterministic processing and human accountability.
+
+| # | Pattern | What it means in practice |
+|---|---|---|
+| 1 | **Skill-as-Orchestration-Layer** | Each skill is an *orchestrator*, not a tool. It composes deterministic scripts, on-demand reference lookups, static templates, and LLM judgment into one end-to-end phase. |
+| 2 | **Working-Directory Blackboard** | Skills communicate through a flat file tree (`working/`, `output/rfp-<id>/`), never through direct invocation. State is inspectable; skills can be inserted or replaced without touching neighbours. |
+| 3 | **Retrieval-First Generation** | Search the curated KB before invoking any LLM. Use HIGH-tier matches verbatim, adapt MEDIUM matches within bounded edit rules, generate only when retrieval fails — and flag everything generated. |
+| 4 | **Confidence-Tier Capping** | Generated content is structurally capped at MEDIUM confidence (75). Only human reviewers can promote tier. The cap propagates through gates, review, and assembly with no agent able to override it. |
+| 5 | **Non-Overridable Human Gates** | Critical decisions (Go/No-Go, Security, Legal, Pricing) are encoded as Python script preconditions. No force flag, no bypass token. The next script will not start without the corresponding audit event. |
+| 6 | **Append-Only Audit + Embedded Provenance** | All skills write to one shared audit log via one shared script. Provenance is embedded in every deliverable (Word appendix, Excel columns, PDF footer, CSV sidecar). Assembly refuses to run if the appendix row count ≠ question count. |
+
+---
+
+## The AI / Deterministic Split
+
+A defining characteristic of the swarm is the discipline with which it segregates LLM judgment from deterministic Python. **LLM judgment is reserved for retrieval-failure paths and natural-language adaptation. Everything else is code.** The full table is in [RESEARCH-PAPER.md §9](RESEARCH-PAPER.md#9-ai-judgment-vs-deterministic-computation); the headline split is:
+
+| Use deterministic Python for… | Use LLM judgment for… |
+|---|---|
+| Question parsing, classification, deduplication | Tie-breaking ambiguous classifications |
+| Weighted scorecard arithmetic | Surfacing context to help a human assign 0–5 scores |
+| Memo / template generation (`[PLACEHOLDER]` substitution) | Adapting MEDIUM-tier KB answers within a bounded edit list |
+| Hybrid BM25 + vector + reranker retrieval | Generating LOW-tier answers when retrieval fails |
+| Tier capping, routing, queue ranking | Drafting cover-letter prose where bounded |
+| Document assembly, packaging, SHA-256 manifests | (none — assembly is 100 % deterministic) |
+| Append-only audit logging | (none — auditing is 100 % deterministic) |
+
+The payoff: a reviewer challenging an answer can trace every score, every routing decision, and every formatting choice to a specific line in a specific script.
 
 ---
 
@@ -139,6 +189,7 @@ This is research. Things it does **not** do yet:
 
 ## Related Reading
 
+- [RESEARCH-PAPER.md](RESEARCH-PAPER.md) — the full long-form architectural study (script audit, blackboard model, AI-vs-deterministic split, six patterns, script inventory).
 - [Microsoft 365 Copilot Cowork — Use custom skills](https://learn.microsoft.com/en-us/microsoft-365/copilot/cowork/use-cowork#create-custom-skills)
 - [`../skill-factory/`](../skill-factory/) — the meta-skill used to scaffold most of the packages under [`skills/`](skills/).
 - [`../README.md`](../README.md) — repo-level overview and roadmap.
