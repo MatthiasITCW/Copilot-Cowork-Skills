@@ -234,7 +234,7 @@ This demo deliberately picked the worst case — an empty answer bank — to sho
 
 This is research. Things it does **not** do yet:
 
-- **No autonomous orchestration.** Today a human (or a thin Copilot Studio topic) drives the pipeline step-to-step. True agent-to-agent chaining with backpressure, retries, and branch-on-failure is future work.
+- **No autonomous orchestration.** Today a human drives the pipeline step-to-step. True agent-to-agent chaining with backpressure, retries, and branch-on-failure is future work.
 - **No real-time gate dispatch.** The gate skill describes the adaptive-card pattern; wiring it to a live Teams channel requires organisation-specific integration.
 - **No production hardening of the answer bank.** The schema is robust; the ingestion pipeline for a large historical Loopio export is sketched, not battle-tested.
 - **Limited evaluation harness.** There is no published benchmark set for RFP answering. Confidence tiers are heuristic, not calibrated.
